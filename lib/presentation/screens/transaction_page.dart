@@ -163,6 +163,9 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                                 content: Text("Please select a wallet")));
                         return;
                       }
+                      // Capture navigator and messenger before async gaps
+                      final navigator = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
                       final txnObj = TransactionEntity(
                         id: txn?.id ??
                             DateTime.now().millisecondsSinceEpoch.toString(),
@@ -182,15 +185,12 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                         } else {
                           await controller.editTransaction(txnObj);
                         }
-                        if (mounted) Navigator.pop(context);
+                        navigator.pop();
                       } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                                content:
-                                    Text('Failed to save transaction: $e')),
-                          );
-                        }
+                        messenger.showSnackBar(
+                          SnackBar(
+                              content: Text('Failed to save transaction: $e')),
+                        );
                       }
                     },
                     child: Text(txn == null ? "Add" : "Edit"),
@@ -293,6 +293,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
               backgroundColor: Colors.green,
               child: const Icon(Icons.file_upload),
               onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 final result = await FilePicker.platform.pickFiles(
                     type: FileType.custom, allowedExtensions: ['json']);
                 if (result != null && result.files.single.path != null) {
@@ -323,19 +324,14 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                     for (final txn in txns) {
                       await controller.addTransaction(txn);
                     }
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content:
-                                Text('Transactions imported successfully!')),
-                      );
-                    }
+                    messenger.showSnackBar(
+                      const SnackBar(
+                          content: Text('Transactions imported successfully!')),
+                    );
                   } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to import: $e')),
-                      );
-                    }
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('Failed to import: $e')),
+                    );
                   }
                 }
               },

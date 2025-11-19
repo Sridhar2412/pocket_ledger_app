@@ -132,6 +132,10 @@ class _WalletPageState extends ConsumerState<WalletPage>
                                               vertical: 14),
                                         ),
                                         onPressed: () async {
+                                          final navigator =
+                                              Navigator.of(context);
+                                          final messenger =
+                                              ScaffoldMessenger.of(context);
                                           try {
                                             await controller.editWallet(
                                               WalletModel(
@@ -144,16 +148,13 @@ class _WalletPageState extends ConsumerState<WalletPage>
                                                 updatedAt: wallet.updatedAt,
                                               ),
                                             );
-                                            if (mounted) Navigator.pop(context);
+                                            navigator.pop();
                                           } catch (e) {
-                                            if (mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                SnackBar(
-                                                    content: Text(
-                                                        'Failed to save wallet: $e')),
-                                              );
-                                            }
+                                            messenger.showSnackBar(
+                                              SnackBar(
+                                                  content: Text(
+                                                      'Failed to save wallet: $e')),
+                                            );
                                           }
                                         },
                                         child: const Text('Save'),
@@ -169,16 +170,14 @@ class _WalletPageState extends ConsumerState<WalletPage>
                         icon: const Icon(Icons.delete),
                         tooltip: 'Delete wallet',
                         onPressed: () async {
+                          final messenger = ScaffoldMessenger.of(context);
                           try {
                             await controller.deleteWallet(wallet.id);
                           } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text('Failed to delete wallet: $e')),
-                              );
-                            }
+                            messenger.showSnackBar(
+                              SnackBar(
+                                  content: Text('Failed to delete wallet: $e')),
+                            );
                           }
                         },
                       ),
@@ -232,6 +231,8 @@ class _WalletPageState extends ConsumerState<WalletPage>
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         onPressed: () async {
+                          final navigator = Navigator.of(context);
+                          final messenger = ScaffoldMessenger.of(context);
                           try {
                             await controller.addWallet(WalletModel(
                               updatedAt: DateTime.now(),
@@ -242,14 +243,12 @@ class _WalletPageState extends ConsumerState<WalletPage>
                               balance:
                                   double.tryParse(balanceController.text) ?? 0,
                             ));
-                            if (mounted) Navigator.pop(context);
+                            navigator.pop();
                           } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content: Text('Failed to add wallet: $e')),
-                              );
-                            }
+                            messenger.showSnackBar(
+                              SnackBar(
+                                  content: Text('Failed to add wallet: $e')),
+                            );
                           }
                         },
                         child: const Text('Add'),

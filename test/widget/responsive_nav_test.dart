@@ -8,11 +8,11 @@ void main() {
       (tester) async {
     int? tapped;
     // Force a narrow screen so the BottomNavigationBar is displayed
-    tester.binding.window.physicalSizeTestValue = const Size(400, 800);
-    tester.binding.window.devicePixelRatioTestValue = 1.0;
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
-      tester.binding.window.clearPhysicalSizeTestValue();
-      tester.binding.window.clearDevicePixelRatioTestValue();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
 
     await tester.pumpWidget(ProviderScope(

@@ -70,7 +70,6 @@ class PocketLedgerApp extends ConsumerWidget {
           seedColor: AppColor.primary,
           primary: AppColor.primary,
           secondary: AppColor.orange,
-          background: AppColor.white,
           surface: AppColor.white,
         ),
         scaffoldBackgroundColor: AppColor.grey1,

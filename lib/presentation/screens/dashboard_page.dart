@@ -23,10 +23,11 @@ class DashboardPage extends ConsumerWidget {
 
     for (final txn in txnList) {
       final month = txn.date.month - 1;
-      if (txn.amount >= 0)
+      if (txn.amount >= 0) {
         incomeData[month] += txn.amount;
-      else
+      } else {
         expenseData[month] += txn.amount.abs();
+      }
       categoryTotals[txn.category] =
           (categoryTotals[txn.category] ?? 0) + txn.amount.abs();
     }
