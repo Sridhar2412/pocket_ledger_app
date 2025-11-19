@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:auto_route/auto_route.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -268,13 +271,77 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
           },
         ),
       ),
-      floatingActionButton: Semantics(
-        button: true,
-        label: 'Add transaction',
-        child: FloatingActionButton(
-          child: const Icon(Icons.add),
-          onPressed: () => showAddEditTransaction(),
-        ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Semantics(
+            button: true,
+            label: 'Add transaction',
+            child: FloatingActionButton(
+              heroTag: 'add_txn',
+              child: const Icon(Icons.add),
+              onPressed: () => showAddEditTransaction(),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Semantics(
+            button: true,
+            label: 'Import transactions from JSON',
+            child: FloatingActionButton(
+              heroTag: 'import_txn',
+              backgroundColor: Colors.green,
+              child: const Icon(Icons.file_upload),
+              onPressed: () async {
+                final result = await FilePicker.platform.pickFiles(
+                    type: FileType.custom, allowedExtensions: ['json']);
+                if (result != null && result.files.single.path != null) {
+                  final path = result.files.single.path!;
+                  try {
+                    final jsonStr = await File(path).readAsString();
+                    final List<dynamic> jsonList = jsonDecode(jsonStr);
+                    final txns = jsonList
+                        .map((e) => TransactionEntity(
+                              id: e['id'] ??
+                                  DateTime.now()
+                                      .millisecondsSinceEpoch
+                                      .toString(),
+                              amount: (e['amount'] as num?)?.toDouble() ?? 0,
+                              date: DateTime.tryParse(e['date'] ?? '') ??
+                                  DateTime.now(),
+                              category: e['category'] ?? '',
+                              walletId: e['walletId'] ?? '',
+                              note: e['note'] ?? '',
+                              receiptUrl: e['receiptUrl'],
+                              isDeleted: e['isDeleted'] ?? false,
+                              updatedAt:
+                                  DateTime.tryParse(e['updatedAt'] ?? '') ??
+                                      DateTime.now(),
+                            ))
+                        .toList();
+                    final controller = ref.read(transactionProvider.notifier);
+                    for (final txn in txns) {
+                      await controller.addTransaction(txn);
+                    }
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content:
+                                Text('Transactions imported successfully!')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to import: $e')),
+                      );
+                    }
+                  }
+                }
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

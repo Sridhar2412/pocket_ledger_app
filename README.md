@@ -4,7 +4,14 @@ A cross-platform personal finance app using Clean Architecture and Riverpod.
 
 ## Architecture
 
-![architecture diagram](https://raw.githubusercontent.com/your-repo/architecture.png)
+```
+┌────────────┐    ┌────────────┐    ┌────────────┐    ┌──────────────┐
+│presentation│<--│  domain    │<--│    data     │<--│ core (utils) │
+│(UI, Riverpod│   │(entities,  │   │(Hive, repos,│   │(di, errors,  │
+│ AutoRoute)  │   │ repos, use │   │ DTOs, API)  │   │ constants)   │
+└────────────┘    │  cases)    │   └────────────┘   └──────────────┘
+				  └────────────┘
+```
 
 - **core/**: DI, errors, constants, Dio client
 - **data/**: Freezed/Hive models, DTOs, local/remote sources, data repos
@@ -27,10 +34,11 @@ A cross-platform personal finance app using Clean Architecture and Riverpod.
 
 ## Sync Strategy
 
-- All CRUD is local-first (Hive)
-- "Sync Now" triggers remote push/pull via mock Retrofit
-- Conflict: `lastUpdated` field wins; deletions by `isDeleted`
-- "Sync Now" can always recover remote state from local
+- All CRUD is local-first (Hive, per-user keys)
+- "Sync Now" triggers remote push/pull via mock Retrofit API
+- Conflict resolution: each wallet/transaction has an `updatedAt` timestamp; the most recent wins (last-write-wins). Deletions are soft (`isDeleted` flag).
+- On sync, local changes are pushed, then remote changes are pulled and merged. If a conflict, the record with the latest `updatedAt` is kept.
+- If offline, all changes are queued and synced next time "Sync Now" is triggered.
 
 ## Setup
 
