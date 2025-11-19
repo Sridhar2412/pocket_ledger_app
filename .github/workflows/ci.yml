@@ -30,7 +30,14 @@ jobs:
         run: flutter pub get
 
       - name: Check formatting
-        run: flutter format --set-exit-if-changed .
+        run: |
+          # Prefer flutter format when available; fall back to dart format
+          if flutter --version >/dev/null 2>&1 && flutter format --help >/dev/null 2>&1; then
+            flutter format --set-exit-if-changed .
+          else
+            echo "flutter format not available; falling back to dart format"
+            dart format --set-exit-if-changed .
+          fi
 
       - name: Run analyzer
         run: flutter analyze
