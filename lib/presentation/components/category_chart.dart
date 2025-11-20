@@ -1,20 +1,16 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class CategoryPieChart extends StatefulWidget {
+final categoryTouchedIndexProvider = StateProvider<int?>((ref) => null);
+
+class CategoryPieChart extends ConsumerWidget {
   final Map<String, double> categoryTotals;
   const CategoryPieChart({super.key, required this.categoryTotals});
-
   @override
-  State<CategoryPieChart> createState() => _CategoryPieChartState();
-}
-
-class _CategoryPieChartState extends State<CategoryPieChart> {
-  int? _touchedIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    final entries = widget.categoryTotals.entries.toList();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entries = categoryTotals.entries.toList();
+    final touchedIndex = ref.watch(categoryTouchedIndexProvider);
 
     if (entries.isEmpty) {
       return SizedBox(
@@ -29,7 +25,7 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
     final sections = List.generate(entries.length, (i) {
       final e = entries[i];
       final baseColor = Colors.primaries[i % Colors.primaries.length];
-      final isTouched = i == _touchedIndex;
+      final isTouched = i == touchedIndex;
       return PieChartSectionData(
         value: e.value,
         title: isTouched ? '${e.key}: ₹ ${e.value.toStringAsFixed(1)}' : e.key,
@@ -51,22 +47,22 @@ class _CategoryPieChartState extends State<CategoryPieChart> {
               pieTouchData: PieTouchData(touchCallback: (event, resp) {
                 final idx = resp?.touchedSection?.touchedSectionIndex ?? -1;
                 if (idx < 0 || idx >= entries.length) {
-                  setState(() => _touchedIndex = null);
+                  ref.read(categoryTouchedIndexProvider.notifier).state = null;
                   return;
                 }
-                setState(() => _touchedIndex = idx);
+                ref.read(categoryTouchedIndexProvider.notifier).state = idx;
               }),
             ),
             swapAnimationDuration: const Duration(milliseconds: 300),
           ),
         ),
-        if (_touchedIndex != null &&
-            _touchedIndex! >= 0 &&
-            _touchedIndex! < entries.length)
+        if (touchedIndex != null &&
+            touchedIndex >= 0 &&
+            touchedIndex < entries.length)
           Padding(
             padding: const EdgeInsets.only(top: 8.0),
             child: Text(
-              '${entries[_touchedIndex!].key}: ${entries[_touchedIndex!].value.toStringAsFixed(2)}',
+              '${entries[touchedIndex].key}: ${entries[touchedIndex].value.toStringAsFixed(2)}',
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium

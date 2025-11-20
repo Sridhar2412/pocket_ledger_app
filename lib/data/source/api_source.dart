@@ -13,7 +13,7 @@ abstract class ApiSource {
   @GET("/transactions")
   Future<List<TransactionDTO>> getTransactions();
 
-  @POST("/transactions")
+  @POST("/transactions/save")
   Future<void> addTransaction(@Body() TransactionDTO txn);
 
   @PUT("/transactions/{id}")

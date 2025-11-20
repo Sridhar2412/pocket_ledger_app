@@ -1,6 +1,7 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pocket_ledger_app/core/theme/app_color.dart';
 import 'package:pocket_ledger_app/domain/models/wallet_model.dart';
 import 'package:pocket_ledger_app/presentation/components/responsive_scaffold.dart';
 import 'package:pocket_ledger_app/presentation/providers/wallet_provider.dart';
@@ -73,6 +74,7 @@ class _WalletPageState extends ConsumerState<WalletPage>
               container: true,
               label: 'Wallet ${wallet.name}, balance ${wallet.balance}',
               child: Card(
+                color: AppColor.white,
                 child: ListTile(
                   title: Text(wallet.name),
                   subtitle:
@@ -81,7 +83,10 @@ class _WalletPageState extends ConsumerState<WalletPage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.edit),
+                        icon: const Icon(
+                          Icons.edit,
+                          color: AppColor.primary,
+                        ),
                         tooltip: 'Edit wallet',
                         onPressed: () {
                           nameController.text = wallet.name;
@@ -167,7 +172,10 @@ class _WalletPageState extends ConsumerState<WalletPage>
                         },
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete),
+                        icon: const Icon(
+                          Icons.delete,
+                          color: AppColor.primary,
+                        ),
                         tooltip: 'Delete wallet',
                         onPressed: () async {
                           final messenger = ScaffoldMessenger.of(context);

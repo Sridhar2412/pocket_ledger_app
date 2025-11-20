@@ -11,23 +11,20 @@ const _kLastTxnSyncKey = 'last_sync_transactions';
 
 final syncServiceProvider = Provider<SyncService>((ref) {
   final api = ref.watch(apiProvider);
-  final txnBox = ref.watch(transactionBoxProvider);
+  final transactionBox = ref.watch(transactionBoxProvider);
   final prefs = ref.watch(sharedPreferencesProvider).maybeWhen(
         data: (v) => v,
         orElse: () => null,
       );
-  return SyncService(api, txnBox, prefs);
+  return SyncService(api, transactionBox, prefs);
 });
 
-/// A small pragmatic sync implementation that uses `updatedAt` timestamps
-/// and a stored `lastSync` timestamp in SharedPreferences. Policy: client-first
-/// with last-write-wins by `updatedAt`.
 class SyncService {
   final ApiSource _api;
-  final Box<data_model.TransactionModel> _txnBox;
+  final Box<data_model.TransactionModel> _transactionBox;
   final SharedPreferences? _prefs;
 
-  SyncService(this._api, this._txnBox, this._prefs);
+  SyncService(this._api, this._transactionBox, this._prefs);
 
   DateTime _lastSync() {
     final millis = _prefs?.getInt(_kLastTxnSyncKey) ?? 0;
@@ -71,7 +68,7 @@ class SyncService {
   Future<bool> pushLocalChanges() async {
     try {
       final lastSync = _lastSync();
-      final local = _txnBox.values.toList();
+      final local = _transactionBox.values.toList();
 
       for (final tx in local) {
         if (tx.updatedAt.isAfter(lastSync)) {
@@ -80,20 +77,17 @@ class SyncService {
             try {
               await _api.deleteTransaction(tx.id);
               // remove locally
-              await _txnBox.delete(tx.id);
+              await _transactionBox.delete(tx.id);
             } catch (e) {
-              // ignore individual failures; will retry next sync
               continue;
             }
           } else {
             try {
               await _api.updateTransaction(tx.id, dto);
             } catch (e) {
-              // If update fails (e.g., not found), try create
               try {
                 await _api.addTransaction(dto);
               } catch (e) {
-                // will retry later
                 continue;
               }
             }
@@ -107,19 +101,18 @@ class SyncService {
     }
   }
 
-  /// Pull remote transactions and upsert into local box using updatedAt.
+  /// Pull remote transactions and insert into local box using updatedAt.
   Future<bool> pullRemoteUpdates() async {
     try {
       final remote = await _api.getTransactions();
       for (final dto in remote) {
-        final local = _txnBox.get(dto.id);
+        final local = _transactionBox.get(dto.id);
         final remoteModel = _fromDto(dto);
         if (local == null) {
-          await _txnBox.put(remoteModel.id, remoteModel);
+          await _transactionBox.put(remoteModel.id, remoteModel);
         } else {
-          // Use last-write-wins by updatedAt
           if (remoteModel.updatedAt.isAfter(local.updatedAt)) {
-            await _txnBox.put(remoteModel.id, remoteModel);
+            await _transactionBox.put(remoteModel.id, remoteModel);
           }
         }
       }

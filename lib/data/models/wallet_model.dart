@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:pocket_ledger_app/domain/models/wallet_model.dart';
 
 part 'wallet_model.freezed.dart';
-part 'wallet_model.g.dart'; // Hive & JSON adapter
+part 'wallet_model.g.dart';
 
 // Adapter Type ID 0
 @HiveType(typeId: 0)

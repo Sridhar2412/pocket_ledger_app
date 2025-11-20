@@ -28,10 +28,9 @@ class ResponsiveScaffold extends ConsumerWidget {
     final width = MediaQuery.of(context).size.width;
     final bool isWide = width >= 800; // breakpoint for web/tablet
 
-    // prepare a logout action that uses the AuthProvider
     final logoutAction = IconButton(
       tooltip: 'Logout',
-      icon: const Icon(Icons.logout_outlined),
+      icon: const Icon(Icons.logout),
       onPressed: () async {
         await ref.read(authProvider.notifier).logout();
         if (context.mounted) {
@@ -40,7 +39,6 @@ class ResponsiveScaffold extends ConsumerWidget {
       },
     );
 
-    // show user id (email) if available in shared preferences
     final prefsAsync = ref.watch(sharedPreferencesProvider);
     final userId = prefsAsync.value?.getString('userId');
 
@@ -95,12 +93,9 @@ class ResponsiveScaffold extends ConsumerWidget {
                 child: IconButton(
                   icon: const Icon(Icons.menu),
                   onPressed: () {
-                    // optional drawer action; open Scaffold drawer if present
                     try {
                       Scaffold.of(context).openDrawer();
-                    } catch (_) {
-                      // no-op if no drawer is attached
-                    }
+                    } catch (_) {}
                   },
                 ),
               ),

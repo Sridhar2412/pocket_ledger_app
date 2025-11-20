@@ -73,7 +73,7 @@ class _ApiSource implements ApiSource {
     )
         .compose(
           _dio.options,
-          '/transactions',
+          '/transactions/save',
           queryParameters: queryParameters,
           data: _data,
         )

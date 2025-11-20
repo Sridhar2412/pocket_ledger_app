@@ -1,0 +1,22 @@
+[
+  {
+    "id": "txn001",
+    "amount": 250.5,
+    "date": "2025-11-19T14:30:00.000Z",
+    "category": "Food",
+    "walletId": "wallet123",
+    "note": "Lunch at cafe",
+    "isDeleted": false,
+    "updatedAt": "2025-11-19T15:00:00.000Z"
+  },
+  {
+    "id": "txn002",
+    "amount": 1200.0,
+    "date": "2025-11-20T10:15:00.000Z",
+    "category": "Utilities",
+    "walletId": "wallet123",
+    "note": "Electricity bill payment",
+    "isDeleted": false,
+    "updatedAt": "2025-11-20T10:20:00.000Z"
+  }
+]

@@ -4,6 +4,7 @@ import 'package:pocket_ledger_app/core/di/di_provider.dart';
 import 'package:pocket_ledger_app/domain/models/wallet_model.dart';
 import 'package:pocket_ledger_app/domain/repositories/wallet_repo.dart';
 import 'package:pocket_ledger_app/presentation/providers/wallet_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeWalletRepository implements WalletRepository {
   final List<WalletModel> _store = [];
@@ -31,6 +32,8 @@ class FakeWalletRepository implements WalletRepository {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences.setMockInitialValues({});
   test('WalletProvider add/edit/delete updates state', () async {
     final fakeRepo = FakeWalletRepository();
     final container = ProviderContainer(overrides: [

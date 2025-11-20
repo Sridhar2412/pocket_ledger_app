@@ -16,7 +16,8 @@ class SignupPage extends ConsumerStatefulWidget {
 class _SignupPageState extends ConsumerState<SignupPage> {
   late TextEditingController emailController;
   late TextEditingController passwordController;
-  bool _obscure = true;
+  // password obscure flag moved to Riverpod provider
+  static final signupObscureProvider = StateProvider<bool>((ref) => true);
 
   @override
   void initState() {
@@ -35,7 +36,8 @@ class _SignupPageState extends ConsumerState<SignupPage> {
   @override
   Widget build(BuildContext context) {
     final status = ref.watch(authProvider);
-    final controller = ref.read(authProvider.notifier);
+    final notifier = ref.read(authProvider.notifier);
+    final obscure = ref.watch(signupObscureProvider);
 
     return Scaffold(
       body: Center(
@@ -45,11 +47,22 @@ class _SignupPageState extends ConsumerState<SignupPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                height: 100,
+                height: 130,
                 child: Column(
                   children: [
                     const SizedBox(height: 8),
-                    Text('Create account',
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: const SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: Image(
+                            image: AssetImage('assets/icon/logo.png'),
+                            fit: BoxFit.contain,
+                          )),
+                    ),
+                    const SizedBox(height: 8),
+                    Text('Welcome Back',
                         style: Theme.of(context).textTheme.headlineSmall),
                   ],
                 ),
@@ -68,10 +81,12 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                       border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: Icon(
-                            _obscure ? Icons.visibility : Icons.visibility_off),
-                        onPressed: () => setState(() => _obscure = !_obscure),
+                            obscure ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => ref
+                            .read(signupObscureProvider.notifier)
+                            .state = !obscure,
                       )),
-                  obscureText: _obscure),
+                  obscureText: obscure),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -79,7 +94,7 @@ class _SignupPageState extends ConsumerState<SignupPage> {
                   onPressed: status == AuthStatus.loading
                       ? null
                       : () async {
-                          await controller.signup(
+                          await notifier.signup(
                               emailController.text, passwordController.text);
                           final statusAfter = ref.read(authProvider);
                           if (statusAfter == AuthStatus.authenticated) {

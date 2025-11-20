@@ -37,11 +37,10 @@ class MonthlyBarChart extends StatelessWidget {
         incomeData.isEmpty ? 0.0 : incomeData.reduce((a, b) => a > b ? a : b);
     final maxExpense =
         expenseData.isEmpty ? 0.0 : expenseData.reduce((a, b) => a > b ? a : b);
-    return (maxIncome > maxExpense ? maxIncome : maxExpense) *
-        1.15; // 15% padding
+    return (maxIncome > maxExpense ? maxIncome : maxExpense) * 1.15;
   }
 
-  // --- NEW: Helper Widget for the legend item ---
+  // Helper Widget for the legend item
   Widget _buildLegendItem(BuildContext context, Color color, String text) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -68,12 +67,10 @@ class MonthlyBarChart extends StatelessWidget {
     );
   }
 
-  // --- Main Build Method ---
   @override
   Widget build(BuildContext context) {
     final maxY = maxDataValue;
 
-    // The chart is now wrapped in a Column to accommodate the legend
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -97,7 +94,7 @@ class MonthlyBarChart extends StatelessWidget {
 
         // 2. Bar Chart
         SizedBox(
-          height: 300, // Explicit height for better layout control
+          height: 300,
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: BarChart(
@@ -162,10 +159,9 @@ class MonthlyBarChart extends StatelessWidget {
     );
   }
 
-  // --- UI Component Builders ---
+  // UI Component Builders
 
   FlTitlesData _buildTitlesData(BuildContext context, double maxY) {
-    // ... (unchanged logic for titles) ...
     return FlTitlesData(
       show: true,
       rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
@@ -222,11 +218,7 @@ class MonthlyBarChart extends StatelessWidget {
     return BarTouchData(
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
-        // Set a nice background color using the theme
-        // tooltipBgColor: Theme.of(context).colorScheme.onSurface,
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
-          // rodIndex 0 is Income (first rod in barRods list)
-          // rodIndex 1 is Expense (second rod in barRods list)
           final isIncome = rodIndex == 0;
           final label = isIncome ? 'Income' : 'Expense';
           final color = isIncome

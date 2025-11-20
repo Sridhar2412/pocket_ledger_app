@@ -3,9 +3,13 @@ import 'dart:io';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
+import 'package:pocket_ledger_app/core/theme/app_color.dart';
+import 'package:pocket_ledger_app/core/utils/export_utils.dart';
 import 'package:pocket_ledger_app/domain/models/transaction_model.dart';
 import 'package:pocket_ledger_app/presentation/components/responsive_scaffold.dart';
 import 'package:pocket_ledger_app/presentation/providers/transaction_provider.dart';
@@ -32,6 +36,11 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
   // simple entrance animation
   late final AnimationController _controller;
   late final Animation<Offset> _slide;
+
+  // Local modal state managed by Riverpod providers
+  static final txnModalSelectedWalletProvider =
+      StateProvider<String?>((ref) => null);
+  static final txnModalReceiptProvider = StateProvider<String?>((ref) => null);
 
   @override
   void initState() {
@@ -70,19 +79,21 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
     return result?.files.first.path;
   }
 
-  void showAddEditTransaction([TransactionEntity? txn]) {
-    if (txn != null) {
-      amountController.text = txn.amount.toString();
-      noteController.text = txn.note;
-      categoryController.text = txn.category;
-      selectedWalletId = txn.walletId;
-      receiptUrl = txn.receiptUrl;
+  void showAddEditTransaction([TransactionEntity? transaction]) {
+    if (transaction != null) {
+      amountController.text = transaction.amount.toString();
+      noteController.text = transaction.note;
+      categoryController.text = transaction.category;
+      // set modal state via providers
+      ref.read(txnModalSelectedWalletProvider.notifier).state =
+          transaction.walletId;
+      ref.read(txnModalReceiptProvider.notifier).state = transaction.receiptUrl;
     } else {
       amountController.clear();
       noteController.clear();
       categoryController.clear();
-      selectedWalletId = null;
-      receiptUrl = null;
+      ref.read(txnModalSelectedWalletProvider.notifier).state = null;
+      ref.read(txnModalReceiptProvider.notifier).state = null;
     }
 
     showModalBottomSheet(
@@ -95,9 +106,11 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
           left: 16,
           right: 16,
         ),
-        child: StatefulBuilder(
-          builder: (context, setState) {
-            final wallets = ref.read(walletProvider);
+        child: Consumer(
+          builder: (context, localRef, _) {
+            final wallets = localRef.watch(walletProvider);
+            final selWallet = localRef.watch(txnModalSelectedWalletProvider);
+            final recUrl = localRef.watch(txnModalReceiptProvider);
             return SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -116,7 +129,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                     decoration: const InputDecoration(labelText: "Category"),
                   ),
                   DropdownButtonFormField<String>(
-                    value: selectedWalletId,
+                    value: selWallet,
                     decoration:
                         const InputDecoration(labelText: "Select Wallet"),
                     items: wallets.map((wallet) {
@@ -126,38 +139,44 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                       );
                     }).toList(),
                     onChanged: (value) {
-                      setState(() {
-                        selectedWalletId = value;
-                      });
+                      localRef
+                          .read(txnModalSelectedWalletProvider.notifier)
+                          .state = value;
                     },
                   ),
                   Row(
                     children: [
                       const Text("Receipt:"),
-                      receiptUrl != null
+                      recUrl != null
                           ? Expanded(
-                              child: Text(receiptUrl!,
-                                  overflow: TextOverflow.ellipsis))
+                              child:
+                                  Text(recUrl, overflow: TextOverflow.ellipsis))
                           : const SizedBox.shrink(),
                       IconButton(
                         icon: const Icon(Icons.camera_alt),
                         onPressed: () async {
                           final url = await pickImage();
-                          setState(() => receiptUrl = url);
+                          localRef
+                              .read(txnModalReceiptProvider.notifier)
+                              .state = url;
                         },
                       ),
                       IconButton(
                         icon: const Icon(Icons.attach_file),
                         onPressed: () async {
                           final url = await pickFile();
-                          setState(() => receiptUrl = url);
+                          localRef
+                              .read(txnModalReceiptProvider.notifier)
+                              .state = url;
                         },
                       ),
                     ],
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      if (selectedWalletId == null) {
+                      final chosenWallet =
+                          localRef.read(txnModalSelectedWalletProvider);
+                      if (chosenWallet == null) {
                         ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                                 content: Text("Please select a wallet")));
@@ -166,24 +185,24 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                       // Capture navigator and messenger before async gaps
                       final navigator = Navigator.of(context);
                       final messenger = ScaffoldMessenger.of(context);
-                      final txnObj = TransactionEntity(
-                        id: txn?.id ??
+                      final transactionObj = TransactionEntity(
+                        id: transaction?.id ??
                             DateTime.now().millisecondsSinceEpoch.toString(),
                         amount: double.tryParse(amountController.text) ?? 0,
                         date: DateTime.now(),
                         category: categoryController.text,
-                        walletId: selectedWalletId!,
+                        walletId: chosenWallet,
                         note: noteController.text,
-                        receiptUrl: receiptUrl,
+                        receiptUrl: localRef.read(txnModalReceiptProvider),
                         updatedAt: DateTime.now(),
                         isDeleted: false,
                       );
-                      final controller = ref.read(transactionProvider.notifier);
+                      final notifier = ref.read(transactionProvider.notifier);
                       try {
-                        if (txn == null) {
-                          await controller.addTransaction(txnObj);
+                        if (transaction == null) {
+                          await notifier.addTransaction(transactionObj);
                         } else {
-                          await controller.editTransaction(txnObj);
+                          await notifier.editTransaction(transactionObj);
                         }
                         navigator.pop();
                       } catch (e) {
@@ -193,7 +212,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                         );
                       }
                     },
-                    child: Text(txn == null ? "Add" : "Edit"),
+                    child: Text(transaction == null ? "Add" : "Edit"),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -207,8 +226,8 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
 
   @override
   Widget build(BuildContext context) {
-    final txns = ref.watch(transactionProvider);
-    final controller = ref.read(transactionProvider.notifier);
+    final transactions = ref.watch(transactionProvider);
+    final notifier = ref.read(transactionProvider.notifier);
 
     return ResponsiveScaffold(
       currentIndex: 2,
@@ -227,25 +246,31 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
       body: SlideTransition(
         position: _slide,
         child: ListView.builder(
-          itemCount: txns.length,
+          itemCount: transactions.length,
           padding: const EdgeInsets.all(8),
           itemBuilder: (ctx, idx) {
-            final txn = txns[idx];
+            final transaction = transactions[idx];
             return Card(
+              color: AppColor.white,
               child: ListTile(
-                title: Text(txn.category),
-                subtitle: Text('₹${txn.amount} on ${txn.date.toLocal()}'),
+                title: Text(transaction.category),
+                subtitle: Text(
+                    '₹${transaction.amount} on ${DateFormat('dd-MM-yyyy').format(transaction.date.toLocal())}'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                        icon: const Icon(Icons.edit),
+                        icon: const Icon(
+                          Icons.edit,
+                          color: AppColor.primary,
+                        ),
                         tooltip: 'Edit transaction',
-                        onPressed: () => showAddEditTransaction(txn)),
+                        onPressed: () => showAddEditTransaction(transaction)),
                     IconButton(
-                        icon: const Icon(Icons.delete),
+                        icon: const Icon(Icons.delete, color: AppColor.primary),
                         tooltip: 'Delete transaction',
-                        onPressed: () => controller.deleteTransaction(txn.id)),
+                        onPressed: () =>
+                            notifier.deleteTransaction(transaction.id)),
                   ],
                 ),
                 onTap: () => showDialog(
@@ -256,12 +281,21 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Amount: ₹${txn.amount}'),
-                        Text('Category: ${txn.category}'),
-                        Text('Wallet: ${txn.walletId}'),
-                        Text('Note: ${txn.note}'),
-                        if (txn.receiptUrl != null)
-                          Text('Receipt: ${txn.receiptUrl}'),
+                        Text('Amount: ₹${transaction.amount}'),
+                        Text('Category: ${transaction.category}'),
+                        Text('Wallet: ${transaction.walletId}'),
+                        Text('Note: ${transaction.note}'),
+                        if (transaction.receiptUrl != null)
+                          const Text('Receipt: '),
+                        if (transaction.receiptUrl != null)
+                          SizedBox(
+                            height: 70,
+                            width: 70,
+                            child: Image.file(
+                              File(transaction.receiptUrl ?? ''),
+                              fit: BoxFit.fill,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -279,7 +313,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
             button: true,
             label: 'Add transaction',
             child: FloatingActionButton(
-              heroTag: 'add_txn',
+              heroTag: 'add_transaction',
               child: const Icon(Icons.add),
               onPressed: () => showAddEditTransaction(),
             ),
@@ -289,19 +323,33 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
             button: true,
             label: 'Import transactions from JSON',
             child: FloatingActionButton(
-              heroTag: 'import_txn',
+              heroTag: 'import_transaction',
               backgroundColor: Colors.green,
               child: const Icon(Icons.file_upload),
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
                 final result = await FilePicker.platform.pickFiles(
                     type: FileType.custom, allowedExtensions: ['json']);
-                if (result != null && result.files.single.path != null) {
-                  final path = result.files.single.path!;
+                if (result != null) {
+                  final platformFile = result.files.single;
+                  String jsonStr;
                   try {
-                    final jsonStr = await File(path).readAsString();
+                    if (platformFile.path != null &&
+                        platformFile.path!.isNotEmpty &&
+                        !kIsWeb) {
+                      // Native platforms: read from file system
+                      jsonStr = await File(platformFile.path!).readAsString();
+                    } else if (platformFile.bytes != null) {
+                      // Web (or when path is unavailable): read from bytes
+                      jsonStr = utf8.decode(platformFile.bytes!);
+                    } else {
+                      messenger.showSnackBar(const SnackBar(
+                          content: Text('Unable to read selected file')));
+                      return;
+                    }
+
                     final List<dynamic> jsonList = jsonDecode(jsonStr);
-                    final txns = jsonList
+                    final transactions = jsonList
                         .map((e) => TransactionEntity(
                               id: e['id'] ??
                                   DateTime.now()
@@ -321,8 +369,8 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                             ))
                         .toList();
                     final controller = ref.read(transactionProvider.notifier);
-                    for (final txn in txns) {
-                      await controller.addTransaction(txn);
+                    for (final transaction in transactions) {
+                      await controller.addTransaction(transaction);
                     }
                     messenger.showSnackBar(
                       const SnackBar(
@@ -333,6 +381,30 @@ class _TransactionPageState extends ConsumerState<TransactionPage>
                       SnackBar(content: Text('Failed to import: $e')),
                     );
                   }
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Semantics(
+            button: true,
+            label: 'Export transactions to JSON',
+            child: FloatingActionButton(
+              heroTag: 'export_transaction',
+              backgroundColor: Colors.blue,
+              child: const Icon(Icons.file_download),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  final success =
+                      await exportTransactionsAsJson(context, transactions);
+                  if (success) {
+                    messenger.showSnackBar(const SnackBar(
+                        content: Text('Transactions exported successfully')));
+                  }
+                } catch (e) {
+                  messenger.showSnackBar(
+                      SnackBar(content: Text('Export failed: $e')));
                 }
               },
             ),

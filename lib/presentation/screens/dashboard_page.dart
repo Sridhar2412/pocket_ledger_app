@@ -16,20 +16,21 @@ class DashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wallets = ref.watch(walletProvider);
-    final txnList = ref.watch(transactionProvider);
+    final transactionList = ref.watch(transactionProvider);
     final incomeData = List<double>.filled(12, 0);
     final expenseData = List<double>.filled(12, 0);
     final categoryTotals = <String, double>{};
 
-    for (final txn in txnList) {
-      final month = txn.date.month - 1;
-      if (txn.amount >= 0) {
-        incomeData[month] += txn.amount;
+    for (final transaction in transactionList) {
+      final month = transaction.date.month - 1;
+      if (transaction.amount >= 0) {
+        incomeData[month] += transaction.amount;
       } else {
-        expenseData[month] += txn.amount.abs();
+        expenseData[month] += transaction.amount.abs();
       }
-      categoryTotals[txn.category] =
-          (categoryTotals[txn.category] ?? 0) + txn.amount.abs();
+      categoryTotals[transaction.category] =
+          (categoryTotals[transaction.category] ?? 0) +
+              transaction.amount.abs();
     }
 
     return ResponsiveScaffold(
@@ -77,7 +78,6 @@ class DashboardPage extends ConsumerWidget {
                 const Text("Monthly Income vs Expenses"),
                 const SizedBox(height: 20),
                 SizedBox(
-                    // height: 220,
                     child: MonthlyBarChart(
                         incomeData: incomeData, expenseData: expenseData)),
                 const SizedBox(height: 24),

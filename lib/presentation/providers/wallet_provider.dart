@@ -25,9 +25,7 @@ final walletProvider =
 class WalletProvider extends StateNotifier<List<WalletModel>> {
   final WalletRepository _repository;
 
-  WalletProvider(this._repository) : super([]) {
-    // initial load handled by auth listener when authenticated
-  }
+  WalletProvider(this._repository) : super([]);
 
   Future<void> loadWallets() async {
     state = await _repository.getWalletList();

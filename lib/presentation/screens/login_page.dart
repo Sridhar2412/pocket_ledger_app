@@ -15,7 +15,8 @@ class LoginPage extends ConsumerStatefulWidget {
 class _LoginPageState extends ConsumerState<LoginPage> {
   late TextEditingController emailController;
   late TextEditingController passwordController;
-  bool _obscure = true;
+  // password obscure flag moved to Riverpod provider
+  static final loginObscureProvider = StateProvider<bool>((ref) => true);
 
   @override
   void initState() {
@@ -40,7 +41,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final status = ref.watch(authProvider);
-    final controller = ref.read(authProvider.notifier);
+    final notifier = ref.read(authProvider.notifier);
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -49,9 +50,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               SizedBox(
-                height: 120,
+                height: 130,
                 child: Column(
                   children: [
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: const SizedBox(
+                          width: 80,
+                          height: 80,
+                          child: Image(
+                            image: AssetImage('assets/icon/logo.png'),
+                            fit: BoxFit.contain,
+                          )),
+                    ),
                     const SizedBox(height: 8),
                     Text('Welcome Back',
                         style: Theme.of(context).textTheme.headlineSmall),
@@ -68,19 +80,24 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 12),
-              TextField(
-                controller: passwordController,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off),
-                    onPressed: () => setState(() => _obscure = !_obscure),
+              Consumer(builder: (context, ref, _) {
+                final obscure = ref.watch(loginObscureProvider);
+                return TextField(
+                  controller: passwordController,
+                  decoration: InputDecoration(
+                    labelText: "Password",
+                    border: const OutlineInputBorder(),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                          obscure ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () => ref
+                          .read(loginObscureProvider.notifier)
+                          .state = !obscure,
+                    ),
                   ),
-                ),
-                obscureText: _obscure,
-              ),
+                  obscureText: obscure,
+                );
+              }),
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
@@ -93,7 +110,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   onPressed: status == AuthStatus.loading
                       ? null
                       : () async {
-                          await controller.login(
+                          await notifier.login(
                             emailController.text.trim(),
                             passwordController.text.trim(),
                           );

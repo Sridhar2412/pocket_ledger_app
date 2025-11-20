@@ -23,16 +23,12 @@ class TransactionModel with _$TransactionModel {
     @HiveField(7) required DateTime updatedAt,
     @HiveField(8) @Default(false) bool isDeleted,
   }) = _TransactionModel;
-
-  /// JSON
   factory TransactionModel.fromJson(Map<String, dynamic> json) =>
       _$TransactionModelFromJson(json);
 
-  // -----------------------------
-  // Domain <--> Data Mappers
-  // -----------------------------
+  // Domain to Data Mappers
 
-  /// Convert Domain Entity → Data Model
+  /// Convert Domain Entityt to Data Model
   factory TransactionModel.fromEntity(domain.TransactionEntity entity) {
     return TransactionModel(
       id: entity.id,
@@ -47,7 +43,7 @@ class TransactionModel with _$TransactionModel {
     );
   }
 
-  /// Convert Data Model → Domain Entity
+  /// Convert Data Model to Domain Entity
   domain.TransactionEntity toEntity() {
     return domain.TransactionEntity(
       id: id,

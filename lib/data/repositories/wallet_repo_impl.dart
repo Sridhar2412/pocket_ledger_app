@@ -5,9 +5,6 @@ import 'package:pocket_ledger_app/domain/models/wallet_model.dart';
 import 'package:pocket_ledger_app/domain/repositories/wallet_repo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// part 'wallet_repo_impl.g.dart';
-
-//
 class WalletRepositoryImpl implements WalletRepository {
   WalletRepositoryImpl(this.walletBox);
   final Box<data.Wallet> walletBox;

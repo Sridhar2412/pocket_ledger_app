@@ -39,6 +39,9 @@ dependencies:
   image_picker: ^1.1.1
   file_picker: ^8.0.3
 
+  # Date & Time
+  intl: ^0.18.0
+
   # Charts
   fl_chart: ^0.68.0
 
@@ -58,6 +61,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/icon/logo.png
 
 flutter_icons:
   android: true

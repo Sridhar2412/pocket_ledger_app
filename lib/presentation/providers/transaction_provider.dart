@@ -8,6 +8,7 @@ final transactionProvider =
     StateNotifierProvider<TransactionProvider, List<TransactionEntity>>((ref) {
   final repo = ref.read(transactionRepositoryProvider);
   final provider = TransactionProvider(repo);
+  // Reload transaction when auth status changes
   ref.listen<AuthStatus>(
     authProvider,
     (previous, next) {
@@ -24,9 +25,7 @@ final transactionProvider =
 class TransactionProvider extends StateNotifier<List<TransactionEntity>> {
   final TransactionRepository _repo;
 
-  TransactionProvider(this._repo) : super([]) {
-    // initial load handled by auth listener
-  }
+  TransactionProvider(this._repo) : super([]);
 
   Future<void> loadTransactions() async {
     state = await _repo.getTransactions();
