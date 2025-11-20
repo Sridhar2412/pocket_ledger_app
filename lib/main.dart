@@ -27,6 +27,7 @@ class AppInitializer extends ConsumerWidget {
 
     if (hiveInit.isLoading || prefsInit.isLoading) {
       return const MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: Scaffold(
           body: Center(
             child: CircularProgressIndicator(),
@@ -37,6 +38,7 @@ class AppInitializer extends ConsumerWidget {
 
     if (hiveInit.hasError || prefsInit.hasError) {
       return MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: Scaffold(
           body: Center(
             child: Text(

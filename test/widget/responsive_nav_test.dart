@@ -17,6 +17,7 @@ void main() {
 
     await tester.pumpWidget(ProviderScope(
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         home: ResponsiveScaffold(
           appBar: AppBar(title: const Text('Test')),
           body: const SizedBox.shrink(),

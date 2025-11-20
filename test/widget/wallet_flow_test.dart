@@ -38,7 +38,8 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [walletRepositoryProvider.overrideWithValue(fakeRepo)],
-        child: const MaterialApp(home: WalletPage()),
+        child: const MaterialApp(
+            debugShowCheckedModeBanner: false, home: WalletPage()),
       ),
     );
 
